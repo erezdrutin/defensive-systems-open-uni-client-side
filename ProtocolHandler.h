@@ -30,8 +30,9 @@ public:
     void sendRequest(const Request& request);
     Response getResponse();
     void handleReconnection();
-    void handleRetrySendFile(const Request& encrypted_content, int maxRetries);
+    void handleRetrySendFile(const Request& encrypted_content, int maxRetries, char *clientId);
     std::string compute_file_checksum(const std::string& filename);
+    bool handleRegisterRequest(char *clientId);
 
 private:
     std::string serverAddress_;

@@ -29,7 +29,7 @@ namespace ServerResponses {
     constexpr uint16_t REGISTRATION_FAILED = 2101;
     constexpr uint16_t RECEIVED_PUBLIC_KEY_SEND_AES = 2102;
     constexpr uint16_t FILE_RECEIVED_CRC_OK = 2103;
-    constexpr uint16_t CONFIRM_RECEIPT = 2104;
+    constexpr uint16_t CONFIRM_MSG = 2104;
     constexpr uint16_t APPROVE_RECONNECT_SEND_AES = 2105;
     constexpr uint16_t RECONNECT_REJECTED = 2106;
 }

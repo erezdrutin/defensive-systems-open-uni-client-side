@@ -98,7 +98,7 @@ std::string ProtocolHandler::compute_file_checksum(const std::string& filename) 
     return crypto.compute_file_checksum(filename);
 }
 
-void ProtocolHandler::handleRetrySendFile(const Request& encrypted_content, int maxRetries) {
+void ProtocolHandler::handleRetrySendFile(const Request& encrypted_content, int maxRetries, char *clientId) {
     int retry_count = 0;
     while (retry_count < maxRetries) {
         sendRequest(encrypted_content);
@@ -109,6 +109,27 @@ void ProtocolHandler::handleRetrySendFile(const Request& encrypted_content, int 
 
             if (receivedCRC == calculatedCRC) {
                 std::cout << "CRC match!" << std::endl;
+                // let's perform a request to handle the last part of the "flow" - request server to "accept".
+                Request file_request;
+                memcpy(file_request.clientId, clientId, 16);  // Assuming clientId is available in this context
+                file_request.version = PROTOCOL_VERSION;
+                file_request.code = ServerRequests::Codes::CRC_CORRECT;  // Replace with the appropriate request code
+
+                char* payload_buffer = new char[filePath_.length() + 1];
+                std::strcpy(payload_buffer, filePath_.c_str());
+                file_request.payloadSize = filePath_.length() + 1;
+                file_request.payload = payload_buffer;
+
+                // Send the request and get the response
+                sendRequest(file_request);
+                delete[] file_request.payload;
+                Response file_response = getResponse();
+                if (file_response.code == ServerResponses::CONFIRM_MSG) {
+                    std::cout << "Successfully finished Client registration process!" << std::endl;
+                } else {
+                    std::cout << "Received invalid status after passing CRC status :/" << std::endl;
+                }
+
             } else {
                 std::cout << "CRC not matching!" << std::endl;
             }
@@ -142,34 +163,46 @@ char* createFilePayloadBuffer(const std::string& fileName, const std::string& co
     return buffer;
 }
 
-void ProtocolHandler::handleRegistration() {
-    CryptoHandler crypto;
-    FileHandler fileHandler;
-    Response serverResponse;
-    char clientId[16];
-
-    // Step 1: Send registration request with an empty clientId:
-    Request reg_request;
-    memcpy(reg_request.clientId, "", 16);
-    reg_request.version = PROTOCOL_VERSION;
-    reg_request.code = ServerRequests::Codes::REGISTRATION;
-
+bool ProtocolHandler::handleRegisterRequest(char *clientId) {
     char* payload_buffer = new char[ServerRequests::Consts::NAME_FIELD_SIZE];
+    Response serverResponse;
+    // Step 1: Send registration request with an empty clientId:
+    Request request {};
+    memcpy(request.clientId, "", 16);
+    request.version = PROTOCOL_VERSION;
+    request.code = ServerRequests::Codes::REGISTRATION;
+
     std::memset(payload_buffer, 0, ServerRequests::Consts::NAME_FIELD_SIZE);
     std::strncpy(payload_buffer, clientName_.c_str(), ServerRequests::Consts::NAME_FIELD_SIZE - 1);
-    reg_request.payloadSize = ServerRequests::Consts::NAME_FIELD_SIZE;
-    reg_request.payload = payload_buffer;
+    request.payloadSize = ServerRequests::Consts::NAME_FIELD_SIZE;
+    request.payload = payload_buffer;
 
     // Performing a request:
-    sendRequest(reg_request);
-    delete[] reg_request.payload;
+    sendRequest(request);
+    delete[] payload_buffer;
     serverResponse = getResponse();
+    // Store the received ClientId:
     memcpy(clientId, &serverResponse.payload[0], serverResponse.payloadSize);
 
     // Check if the registration was accepted by the server
     if(serverResponse.code != ServerResponses::REGISTRATION_SUCCESS) {
         // Handle registration failure
         std::cout << SERVER_ERROR_MSG + "failed to register to the server" << std::endl;
+        return false;
+    }
+    // If we reached here then registration was successful:
+    return true;
+}
+
+void ProtocolHandler::handleRegistration() {
+    CryptoHandler crypto;
+    FileHandler fileHandler;
+    Response serverResponse;
+    char clientId[16];
+    char* payload_buffer = new char[ServerRequests::Consts::NAME_FIELD_SIZE];
+
+    // Step 1: Send registration request with an empty clientId:
+    if (!ProtocolHandler::handleRegisterRequest(clientId)) {
         return;
     }
 
@@ -235,22 +268,11 @@ void ProtocolHandler::handleRegistration() {
     encrypted_file_request.payload = payloadBuffer;
 
     // Attempting to perform the request up to 3 times:
-    handleRetrySendFile(encrypted_file_request, 3);
+    handleRetrySendFile(encrypted_file_request, 3, clientId);
 
     // Clean up
     delete[] encrypted_file_request.payload;
 
-//    MeInfo me_info = fileHandler.readMeInfo();
-//    std::string encrypted_content = crypto.encrypt_with_aes(me_info.base64Key);
-//    Request encrypted_file_request;
-//    memcpy(encrypted_file_request.clientId, &clientId, 16);
-//    encrypted_file_request.version = PROTOCOL_VERSION;
-//    encrypted_file_request.code = ServerRequests::Codes::SEND_FILE;  // Sending a file request code
-//    encrypted_file_request.payloadSize = encrypted_content.size();
-//    encrypted_file_request.payload = encrypted_content;
-//
-//    // Attempting to perform the request up to 3 times:
-//    handleRetrySendFile(encrypted_file_request, 3);
 }
 
 
