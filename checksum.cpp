@@ -483,25 +483,31 @@ std::string readfile(std::string fname) {
     }
 }
 
-
-uint32_t readCrc(std::string fname) {
-    if (std::filesystem::exists(fname)) {
-        std::filesystem::path fpath = fname;
-        std::ifstream f1(fname.c_str(), std::ios::binary);
-
-        size_t size = std::filesystem::file_size(fpath);
-        char* b = new char[size];
-        f1.seekg(0, std::ios::beg);
-        f1.read(b, size);
-        f1.close();
-
-        uint32_t crcValue = memcrc(b, size); // Assuming memcrc returns uint32_t
-        delete[] b;
-
-        return crcValue;
-    }
-    else {
+/**
+ * Reads the contents of a file and calculates its CRC value.
+ * @param fname The name of the file to read and calculate the CRC for.
+ * @return The calculated CRC value of the file's contents or 0 if an error occurred.
+ */
+uint32_t readCrc(const std::string& fname) {
+    std::ifstream file(fname, std::ios::binary | std::ios::ate);
+    if (!file) {
         std::cerr << "Cannot open input file " << fname << std::endl;
-        return 0;  // Return a default value, could be adjusted as needed
+        return 0;
     }
+
+    std::streamsize size = file.tellg();
+    if (size == -1) {
+        std::cerr << "Error determining the size of the file " << fname << std::endl;
+        return 0;
+    }
+
+    std::vector<char> buffer(size);
+    file.seekg(0, std::ios::beg);
+    if (!file.read(buffer.data(), size)) {
+        std::cerr << "Error reading file " << fname << std::endl;
+        return 0;
+    }
+
+    uint32_t crcValue = memcrc(buffer.data(), size);
+    return crcValue;
 }

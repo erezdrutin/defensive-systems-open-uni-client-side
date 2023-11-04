@@ -1,7 +1,8 @@
-//
-// Created by Erez on 27/10/2023.
-//
-
+/**
+ * Author: Erez Drutin
+ * Date: 04.11.2023
+ * Purpose: Serve as a header file for FileHandler.cpp
+ */
 #ifndef DEFENSIVE_MAMAN_15_FILEHANDLER_H
 #define DEFENSIVE_MAMAN_15_FILEHANDLER_H
 
@@ -28,6 +29,7 @@ public:
     MeInfo readMeInfo();
     TransferInfo readTransferInfo();
     void writeToFile(const std::string& filename, const std::string& content);
+    void saveMeInfo(const std::string& clientName, const char* clientId, const std::string& privateKey);
     void savePrivateRSAKey(const std::string &privateKey);
     std::string readFileContents(const std::string& path);
 private:
@@ -36,5 +38,4 @@ private:
 };
 
 
-
-#endif //DEFENSIVE_MAMAN_15_FILEHANDLER_H
+#endif

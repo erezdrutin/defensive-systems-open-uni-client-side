@@ -10,5 +10,5 @@ include_directories(${CRYPTO++_INCLUDE_DIR})
 link_directories(${CRYPTO++_LIBRARY_DIR})
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mrdrnd")
 
-add_executable(defensive_maman_15 main.cpp RSAWrapper.cpp RSAWrapper.h Base64Wrapper.cpp Base64Wrapper.h AESWrapper.cpp AESWrapper.h CryptoHandler.cpp CryptoHandler.h checksum.cpp FileHandler.cpp FileHandler.h ProtocolHandler.cpp ProtocolHandler.h AesKeyWrap.cpp AesKeyWrap.h)
+add_executable(defensive_maman_15 main.cpp RSAWrapper.cpp RSAWrapper.h Base64Wrapper.cpp Base64Wrapper.h AESWrapper.cpp AESWrapper.h CryptoHandler.cpp CryptoHandler.h checksum.cpp FileHandler.cpp FileHandler.h ProtocolHandler.cpp ProtocolHandler.h Logger.cpp Logger.h)
 target_link_libraries(defensive_maman_15 ${CRYPTO++_LIBRARY_NAME})

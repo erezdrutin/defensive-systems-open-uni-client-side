@@ -1,61 +1,50 @@
 #include "ProtocolHandler.h"
-#include "CryptoHandler.h"
 #include "FileHandler.h"
 #include <iostream>
-#include <iostream>
-#include <string>
 #include <vector>
-#include <iomanip>
-#include "AESWrapper.h"
-#include "CryptoHandler.h"
+#include "Logger.h"
 
 
-int main() {
-//    CryptoHandler crypto;
-//
-//    std::string key = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F};
-//    std::string message = "Hello, World!";
-//
-//    std::string encrypted_message = CryptoHandler::encrypt_with_aes(message, key);
-//    std::cout << "Encrypted Message: " << encrypted_message << std::endl;
+/**
+ * Attempts to create a client and handle either reconnection or registration processes based on the presence of
+ * existing client information. If the MeInfo file exists, we will try to reconnect. If not, or if it exists but the
+ * server isn't familiar with the user, we will try and register the user.
+ * @param logger Reference to the Logger instance for logging.
+ * @return True if the client operation was successful, false otherwise.
+ */
+bool handleClient(Logger& logger) {
+    FileHandler fileHandler;
+    TransferInfo transferInfo = fileHandler.readTransferInfo();
 
     try {
-        // Initialize the FileHandler
-        FileHandler fileHandler;
-        TransferInfo transferInfo = fileHandler.readTransferInfo();
-//        try {
-//            MeInfo meInfo = fileHandler.readMeInfo();
-//            ProtocolHandler protocolHandler(transferInfo.ipAddress, transferInfo.port, meInfo.name);
-//            if (protocolHandler.handleConnection())
-//                protocolHandler.handleReconnection();
-//        } catch (std::runtime_error &err) {
-//            ProtocolHandler protocolHandler(transferInfo.ipAddress, transferInfo.port, transferInfo.name);
-//            if (protocolHandler.handleConnection())
-//                protocolHandler.handleRegistration();
-//        }
+        MeInfo meInfo = fileHandler.readMeInfo();
+        ProtocolHandler protocolHandler(transferInfo.ipAddress, transferInfo.port, meInfo.name, transferInfo.filePath);
+        if (protocolHandler.handleConnection()) {
+            return protocolHandler.handleReconnection();
+        }
+    } catch (std::runtime_error &err) {
+        // If reading MeInfo fails, assume new registration is needed.
+        ProtocolHandler protocolHandler(transferInfo.ipAddress, transferInfo.port, transferInfo.name, transferInfo.filePath);
+        if (protocolHandler.handleConnection()) {
+            return protocolHandler.handleRegistration();
+        }
+    }
+    // Return false if neither reconnection nor registration succeeds:
+    return false;
+}
 
+int main() {
+    Logger logger("Main");
 
-        ProtocolHandler protocolHandler(transferInfo.ipAddress, transferInfo.port, transferInfo.name,
-                                        "/Users/erez/Desktop/defensive_prog_lab/c++/defensive_maman_15/cool.txt");
-        if (protocolHandler.handleConnection())
-            protocolHandler.handleRegistration();
-
-        // Read the me.info and transfer.info
-
-        // Initialize the ProtocolHandler with the server details
-
-        // Connect to the server
-
-        // Here, we should decide whether to handle registration or reconnection.
-        // This decision can be based on some criteria, such as whether the client has previously registered.
-        // For this demonstration, we'll just use the registration flow:
-
-        // If reconnection is needed:
-        // protocolHandler.handleReconnection();
-
-        std::cout << "Operation completed successfully!" << std::endl;
-
+    try {
+        bool status = handleClient(logger);
+        if (status) {
+            logger.info("Successfully finished client operation. Shutting down...");
+        } else {
+            logger.error("Failed while attempting to handle client operation. Shutting down...");
+        }
     } catch (const std::exception& ex) {
+        logger.error("Failed while attempting to handle client operation: " + std::string(ex.what()));
         std::cerr << "Error: " << ex.what() << std::endl;
     }
 

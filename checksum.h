@@ -19,7 +19,7 @@ extern uint_fast32_t const crctab[8][256];
 
 unsigned long memcrc(char * b, size_t n);
 std::string readfile(std::string fname);
-uint32_t readCrc(std::string fname);
+uint32_t readCrc(const std::string& fname);
 
 
 #endif //DEFENSIVE_MAMAN_15_CHECKSUM_H

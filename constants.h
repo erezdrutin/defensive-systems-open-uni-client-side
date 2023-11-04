@@ -6,8 +6,11 @@
 #define DEFENSIVE_MAMAN_15_CONSTANTS_H
 #include "string"
 
-const char CLIENTS_BASE_PATH[] = "/Users/erez/Desktop/defensive_prog_lab/c++/defensive_maman_15";
+const char CLIENTS_BASE_PATH[] = "/Users/erez/Desktop/defensive_prog_lab/c++/defensive_maman_15/";
 const char PROTOCOL_VERSION = '3';
+const char PRIVATE_KEY_FILE[] = "priv.key";
+const char ME_INFO_FILE_NAME[] = "me.info";
+const char TRANSFER_INFO_FILE_NAME[] = "transfer.info";
 
 namespace ServerRequests {
     namespace Codes {
